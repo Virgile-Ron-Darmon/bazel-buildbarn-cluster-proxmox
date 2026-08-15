@@ -1,0 +1,35 @@
+---
+# Moves the ens19 DHCP stanza out of /etc/network/interfaces and into
+# /etc/network/interfaces.d/ens19, on the golden image (source_vm_id),
+# so that later, on each clone, ens19_static_ip's `template` task
+# (which overwrites /etc/network/interfaces.d/ens19 wholesale) cleanly
+# replaces it with a static config -- instead of leaving a leftover
+# `iface ens19 inet dhcp` in the main interfaces file, which ifupdown
+# gives precedence over the static one and causes ens19 to fall back to
+# a 169.254.x.x link-local address.
+#
+# Runs once against rbe_source before Terraform clones it (see
+# install_dhcp.yml / source.tf), so this only ever needs to happen on
+# the golden image, not on every clone.
+
+- name: Remove baked-in "allow-hotplug ens19" line from /etc/network/interfaces
+  lineinfile:
+    path: /etc/network/interfaces
+    regexp: '^allow-hotplug ens19\s*$'
+    state: absent
+
+- name: Remove baked-in "iface ens19 inet dhcp" line from /etc/network/interfaces
+  lineinfile:
+    path: /etc/network/interfaces
+    regexp: '^iface ens19 inet dhcp\s*$'
+    state: absent
+
+- name: Write the DHCP config into /etc/network/interfaces.d/ens19 instead
+  copy:
+    dest: /etc/network/interfaces.d/ens19
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      allow-hotplug ens19
+      iface ens19 inet dhcp

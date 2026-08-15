@@ -1,0 +1,38 @@
+# Bazel
+bazel-bin
+bazel-out
+bazel-scale_rbe_v2
+bazel-testlogs
+bazel-*
+
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+crash.log
+crash.*.log
+**/secrets.tfvars
+
+# Terraform variable files that may contain secrets
+*.tfvars
+*.tfvars.json
+secrets.tfvars
+
+# Terraform CLI config
+.terraformrc
+terraform.rc
+
+# Rust
+target/
+Cargo.lock
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+*.log

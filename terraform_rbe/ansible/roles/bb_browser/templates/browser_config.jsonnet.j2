@@ -1,0 +1,27 @@
+{
+  maximumMessageSizeBytes: 16 * 1024 * 1024,
+  blobstore: {
+    contentAddressableStorage: {
+      grpc: {
+        client: {
+          address: 'host.docker.internal:{{ storage_grpc_port }}',
+        },
+      },
+    },
+    actionCache: {
+      grpc: {
+        client: {
+          address: 'host.docker.internal:{{ storage_grpc_port }}',
+        },
+      },
+    },
+  },
+  httpServers: [{
+    listenAddresses: [':{{ browser_http_port }}'],
+    authenticationPolicy: { allow: {} },
+  }],
+  authorizer: { allow: {} },
+  requestMetadataLinksJmespathExpression: {
+    expression: '`{}`',
+  },
+}

@@ -1,0 +1,40 @@
+---
+# Installs and configures isc-dhcp-server, but does NOT enable or start it.
+#
+# Run against source_vm_id (source.tf) so the packages and config files are
+# already present on every clone's disk. Running the *service* on the
+# template or on more than one clone at a time would mean multiple DHCP
+# servers answering on the same subnet, so activation is a separate step
+# (tasks/activate.yml) applied only to the master.
+#
+# dhcpd.conf is fully generated here from Terraform's dhcp_reservations
+# (deploy.tf), loaded via dhcp_reservations.yml (see install_dhcp.yml).
+# There is no scanning/discovery step: every reserved MAC's host{} block
+# is already known and written up front.
+
+- name: Install isc-dhcp-server
+  apt:
+    name:
+      - isc-dhcp-server
+    state: present
+    update_cache: true
+
+- name: Set DHCP listening interface
+  copy:
+    dest: /etc/default/isc-dhcp-server
+    content: |
+      INTERFACESv4="{{ dhcp_interface }}"
+      INTERFACESv6=""
+
+- name: Deploy dhcpd.conf (static header + reservations from Terraform)
+  template:
+    src: dhcpd.conf.j2
+    dest: /etc/dhcp/dhcpd.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+# Explicitly NOT starting/enabling isc-dhcp-server here.
+# On source_vm_id this leaves a fully-configured but dormant install baked
+# into the template. See tasks/activate.yml for the master-only step that
+# turns it on.

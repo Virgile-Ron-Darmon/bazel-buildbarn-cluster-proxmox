@@ -1,0 +1,30 @@
+---
+# Runs against rbe-worker-1 only, reached via its mgmt IP (net0, DHCP,
+# discovered from the guest agent -- same mechanism as before). It:
+#
+#   1. Statically pins the master's own ens19 (net1, the cluster network)
+#      to 10.50.0.1, since a DHCP server can't hand out addresses on an
+#      interface that doesn't have one of its own yet.
+#   2. Activates the DHCP server that install_dhcp.yml already baked into
+#      every clone's disk, which starts serving 10.50.x.x leases to every
+#      other worker's pre-set 02:ee:ee:ee:XX:YY MAC on ens19.
+#
+# Everyone else's static IP comes purely from their Terraform-assigned MAC
+# plus this DHCP server; no per-host Ansible touch is needed for
+# addressing beyond this single master bootstrap.
+
+- hosts: rbe_master_mgmt
+  become: true
+
+  vars:
+    target_static_ip: "10.50.0.1"
+    dhcp_interface: ens19
+
+  roles:
+    - ens19_static_ip
+
+  tasks:
+    - name: Activate the DHCP server on the master
+      import_role:
+        name: dhcp_server
+        tasks_from: activate

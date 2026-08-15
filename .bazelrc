@@ -1,0 +1,5 @@
+build:rbe --remote_executor=grpc://10.50.0.1:8982
+build:rbe --remote_cache=grpc://10.50.0.1:8980
+build:rbe --remote_instance_name=
+build:rbe --jobs=64
+build:rbe --verbose_failures

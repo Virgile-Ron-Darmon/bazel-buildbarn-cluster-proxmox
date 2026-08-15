@@ -1,0 +1,41 @@
+- name: Ensure storage config directory exists
+  file:
+    path: /etc/buildbarn/storage
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure storage data directories exist
+  file:
+    path: "{{ storage_data_dir }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - cas_persistent_state
+    - ac_persistent_state
+
+- name: Template bb-storage config
+  template:
+    src: storage_config.jsonnet.j2
+    dest: /etc/buildbarn/storage/config.jsonnet
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart bb-storage
+
+- name: Ensure bb-storage container is running
+  community.docker.docker_container:
+    name: bb-storage
+    image: "{{ bb_images.storage }}"
+    pull: never
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ storage_grpc_port }}:{{ storage_grpc_port }}"
+    volumes:
+      - /etc/buildbarn/storage:/config:ro
+      - "{{ storage_data_dir }}:/data"
+    command: /config/config.jsonnet

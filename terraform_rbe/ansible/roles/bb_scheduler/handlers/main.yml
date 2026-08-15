@@ -1,0 +1,5 @@
+- name: restart bb-scheduler
+  community.docker.docker_container:
+    name: bb-scheduler
+    state: started
+    restart: true

@@ -1,0 +1,5 @@
+- name: restart bb-browser
+  community.docker.docker_container:
+    name: bb-browser
+    state: started
+    restart: true

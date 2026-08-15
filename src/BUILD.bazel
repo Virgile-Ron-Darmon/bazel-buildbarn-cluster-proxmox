@@ -1,0 +1,12 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+N = 100  # how many binaries to generate
+
+[
+    rust_binary(
+        name = "slow_bin_1_{}".format(i),
+        srcs = ["main.rs"],
+        edition = "2021",
+    )
+    for i in range(N)
+]

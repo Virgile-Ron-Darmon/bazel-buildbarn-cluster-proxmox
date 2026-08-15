@@ -1,0 +1,32 @@
+- name: Ensure scheduler config directory exists
+  file:
+    path: /etc/buildbarn/scheduler
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Template bb-scheduler config
+  template:
+    src: scheduler_config.jsonnet.j2
+    dest: /etc/buildbarn/scheduler/config.jsonnet
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart bb-scheduler
+
+- name: Ensure bb-scheduler container is running
+  community.docker.docker_container:
+    name: bb-scheduler
+    image: "{{ bb_images.scheduler }}"
+    pull: never
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ scheduler_grpc_port }}:{{ scheduler_grpc_port }}"
+      - "{{ scheduler_client_grpc_port }}:{{ scheduler_client_grpc_port }}"
+    volumes:
+      - /etc/buildbarn/scheduler:/config:ro
+    etc_hosts:
+      host.docker.internal: host-gateway
+    command: /config/config.jsonnet

@@ -1,0 +1,62 @@
+# Pre-warm the golden image.
+#
+# This runs against source_vm_id itself, before Terraform full-clones it into
+# the template. Every image the cluster will ever need is pulled into that
+# VM's local Docker image store, so the linked clones inherit a populated
+# cache and never hit ghcr.io on first boot.
+#
+# Image references come from group_vars/all.yml, the same place the
+# deployment roles read them from, so the pulled tags and the run tags
+# cannot drift apart.
+
+- hosts: rbe_source
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Wait for SSH to become available
+      wait_for_connection:
+        timeout: 300
+
+    - name: Gather facts
+      setup:
+
+    - name: Fail early if any image tag is still a placeholder
+      assert:
+        that:
+          - bb_storage_tag is defined
+          - bb_scheduler_tag is defined
+          - bb_browser_tag is defined
+          - bb_worker_tag is defined
+          - bb_runner_tag is defined
+          - bb_runner_base_image is defined
+        fail_msg: >-
+          One or more Buildbarn image tags are still set to REPLACE_ME.
+          Set real, mutually-compatible tags in terraform.tfvars. See
+          https://github.com/buildbarn/bb-deployments for a known-good set.
+
+    - name: Verify Docker is available on the source VM
+      command: docker info
+      changed_when: false
+
+    - name: Pull all Buildbarn images into the golden image
+      community.docker.docker_image:
+        name: "{{ item }}"
+        source: pull
+        force_source: false
+      loop:
+        - "{{ bb_images.storage }}"
+        - "{{ bb_images.scheduler }}"
+        - "{{ bb_images.browser }}"
+        - "{{ bb_images.worker }}"
+        - "{{ bb_images.runner_installer }}"
+        - "{{ bb_runner_base_image }}"
+
+    - name: List cached images for confirmation
+      command: docker images --format '{{ "{{" }}.Repository{{ "}}" }}:{{ "{{" }}.Tag{{ "}}" }}'
+      register: cached_images
+      changed_when: false
+
+    - name: Show what is now baked into the golden image
+      debug:
+        var: cached_images.stdout_lines

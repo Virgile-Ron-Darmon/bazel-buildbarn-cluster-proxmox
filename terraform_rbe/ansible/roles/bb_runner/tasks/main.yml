@@ -1,0 +1,67 @@
+# bb_runner is bb-worker's companion process: bb-worker prepares the
+# input files for a build action and hands the actual command execution
+# off to bb-runner over a shared unix socket. See:
+# https://github.com/buildbarn/bb-remote-execution#readme
+#
+# Buildbarn ships bb_runner as a bare binary inside the
+# bb-runner-installer image rather than as a standalone runnable
+# container. The documented pattern is to mount that image's
+# filesystem into a vanilla base image and exec the binary from
+# there, which is what the two containers below do.
+
+- name: Ensure runner config directory exists
+  file:
+    path: /etc/buildbarn/runner
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure shared worker/runner data directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - "{{ worker_root_dir }}"
+    - "{{ worker_build_dir }}"
+    - "{{ worker_cache_dir }}"
+    - "{{ runner_socket_dir }}"
+
+- name: Template bb-runner config
+  template:
+    src: runner_config.jsonnet.j2
+    dest: /etc/buildbarn/runner/config.jsonnet
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart bb-runner
+
+- name: Ensure bb-runner-installer container is running (copies the bb_runner binary into a shared volume)
+  community.docker.docker_container:
+    name: bb-runner-installer
+    image: "{{ bb_images.runner_installer }}"
+    pull: never
+    state: started
+    restart_policy: "no"
+    volumes:
+      - "bb_runner_bin:/bb"
+
+# Mounts the same single /worker volume as bb-worker, so both processes
+# see one filesystem and the socket and build tree stay consistent.
+- name: Ensure bb-runner container is running
+  community.docker.docker_container:
+    name: bb-runner
+    image: "{{ bb_runner_base_image }}"
+    pull: never
+    state: started
+    restart_policy: always
+    volumes:
+      - "bb_runner_bin:/bb:ro"
+      - /etc/buildbarn/runner:/config:ro
+      - "{{ worker_root_dir }}:/worker"
+    command: >-
+      /bin/sh -c "while ! test -f /bb/installed; do sleep 1; done;
+      exec /bb/bb_runner /config/config.jsonnet"

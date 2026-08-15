@@ -1,0 +1,44 @@
+{
+  maximumMessageSizeBytes: 16 * 1024 * 1024,
+  buildDirectories: [{
+    native: {
+      buildDirectoryPath: '/worker/build',
+      cacheDirectoryPath: '/worker/cache',
+      maximumCacheFileCount: 10000,
+      maximumCacheSizeBytes: 10 * 1024 * 1024 * 1024,
+      cacheReplacementPolicy: 'LEAST_RECENTLY_USED',
+    },
+    runners: [{
+      endpoint: { address: 'unix:///worker/runner/runner.sock' },
+      concurrency: {{ worker_concurrency }},
+      platform: {
+        properties: [],
+      },
+      workerId: {
+        hostname: '{{ inventory_hostname }}',
+        address: '{{ ansible_host }}',
+      },
+    }],
+  }],
+  scheduler: {
+    address: '{{ master_ip }}:{{ scheduler_grpc_port }}',
+  },
+  blobstore: {
+    contentAddressableStorage: {
+      grpc: {
+        client: {
+          address: '{{ master_ip }}:{{ storage_grpc_port }}',
+        },
+      },
+    },
+    actionCache: {
+      grpc: {
+        client: {
+          address: '{{ master_ip }}:{{ storage_grpc_port }}',
+        },
+      },
+    },
+  },
+  inputDownloadConcurrency: 10,
+  outputUploadConcurrency: 10,
+}

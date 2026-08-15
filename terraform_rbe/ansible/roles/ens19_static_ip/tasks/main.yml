@@ -1,0 +1,20 @@
+# Assigns each cluster node its static 10.50.0.x address on ens19.
+#
+# Runs while the host is still only reachable on its DHCP-assigned mgmt_ip.
+# After this the node also answers on the static subnet, which is what
+# site.yml then targets for the actual Buildbarn deployment.
+
+- name: Drop static config for ens19
+  template:
+    src: interfaces_ens19.j2
+    dest: /etc/network/interfaces.d/ens19
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Bring ens19 down first (in case it's already up from a baked-in dhcp stanza)
+  command: ifdown ens19
+  failed_when: false
+
+- name: Bring ens19 up with new static config
+  command: ifup ens19

@@ -1,0 +1,44 @@
+- name: Ensure worker config directory exists
+  file:
+    path: /etc/buildbarn/worker
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure shared worker/runner data directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - "{{ worker_root_dir }}"
+    - "{{ worker_build_dir }}"
+    - "{{ worker_cache_dir }}"
+    - "{{ runner_socket_dir }}"
+
+- name: Template bb-worker config
+  template:
+    src: worker_config.jsonnet.j2
+    dest: /etc/buildbarn/worker/config.jsonnet
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart bb-worker
+
+# The whole worker tree is mounted as a single volume rather than one
+# mount per subdirectory. bb-worker hardlinks cached files into the
+# build directory, and cross-mount hardlinks fail with EXDEV.
+- name: Ensure bb-worker container is running
+  community.docker.docker_container:
+    name: bb-worker
+    image: "{{ bb_images.worker }}"
+    pull: never
+    state: started
+    restart_policy: always
+    volumes:
+      - /etc/buildbarn/worker:/config:ro
+      - "{{ worker_root_dir }}:/worker"
+    command: /config/config.jsonnet

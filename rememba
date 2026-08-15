@@ -1,0 +1,37 @@
+curl -sSL -o grpcurl.tar.gz https://github.com/fullstorydev/grpcurl/releases/download/v1.9.3/grpcurl_1.9.3_linux_x86_64.tar.gz
+tar -xzf grpcurl.tar.gz grpcurl
+sudo mv grpcurl /usr/local/bin/
+grpcurl --version
+
+
+grpcurl -plaintext -d '{}' 10.50.0.1:8982 build.bazel.remote.execution.v2.Capabilities/GetCapabilities
+
+
+bazel shutdown
+bazel build \
+  --remote_executor=grpc://10.50.0.1:8982 \
+  --remote_cache=grpc://10.50.0.1:8980 \
+  --remote_instance_name="" \
+  --verbose_failures \
+  //src:slow_bin_0
+
+
+  ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook \
+  --forks 20 \
+  -i ansible/inventory/inventory.ini \
+  ansible/site.yml \
+  --extra-vars "bb_storage_tag=20260609T094425Z-10acc76" \
+  --extra-vars "bb_scheduler_tag=20260527T162223Z-c48dcda" \
+  --extra-vars "bb_browser_tag=20260415T065533Z-ee35c54" \
+  --extra-vars "bb_worker_tag=20260527T162223Z-c48dcda" \
+  --extra-vars "bb_runner_tag=20260527T162223Z-c48dcda" \
+  --extra-vars "bb_runner_base_image=buildpack-deps:bookworm"
+
+
+  bb_runner_base_image: "gcc:14-bookworm"
+  docker run --rm buildpack-deps:bookworm ls -l /usr/bin/gcc
+
+
+  terraform apply -var-file="secrets.tfvars" -var-file="terraform.tfvars" -auto-approve
+  terraform destroy -var-file="secrets.tfvars" -var-file="terraform.tfvars" -auto-approve
+  terraform plan -var-file="secrets.tfvars" -var-file="terraform.tfvars"

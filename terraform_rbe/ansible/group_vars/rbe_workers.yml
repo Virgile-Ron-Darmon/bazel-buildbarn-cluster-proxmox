@@ -1,0 +1,18 @@
+master_ip: "10.50.0.1"
+scheduler_grpc_port: 8981
+storage_grpc_port: 8980
+worker_concurrency: 4
+
+# Shared between bb-worker and bb-runner on each compute node.
+# These must all live under a single parent directory that is mounted
+# into the containers as one volume. bb-worker hardlinks files from the
+# cache directory into the build directory, and Linux rejects hardlinks
+# that cross a mount point (EXDEV, "invalid cross-device link"), so
+# mounting build/ and cache/ as separate bind mounts breaks execution.
+worker_root_dir: /var/lib/buildbarn/worker
+worker_build_dir: "{{ worker_root_dir }}/build"
+worker_cache_dir: "{{ worker_root_dir }}/cache"
+runner_socket_dir: "{{ worker_root_dir }}/runner"
+
+# Container image references live in group_vars/all.yml so the pre-warm
+# playbook and these roles cannot drift apart.

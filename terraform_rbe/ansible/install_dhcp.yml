@@ -1,0 +1,18 @@
+---
+# Runs against source_vm_id, alongside prewarm_images.yml, so the DHCP
+# server is installed and fully configured on every clone's disk. It is
+# never started here -- see bootstrap_master.yml, which activates it on
+# rbe-worker-1 only.
+
+- hosts: rbe_source
+  become: true
+
+  vars:
+    dhcp_interface: ens19
+
+  vars_files:
+    - dhcp_reservations.yml
+
+  roles:
+    - ens19_dhcp
+    - dhcp_server

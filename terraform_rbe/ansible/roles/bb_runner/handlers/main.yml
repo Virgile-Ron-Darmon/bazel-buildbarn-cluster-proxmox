@@ -1,0 +1,5 @@
+- name: restart bb-runner
+  community.docker.docker_container:
+    name: bb-runner
+    state: started
+    restart: true

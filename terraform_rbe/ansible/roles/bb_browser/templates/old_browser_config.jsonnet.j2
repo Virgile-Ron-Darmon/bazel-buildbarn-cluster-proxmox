@@ -1,0 +1,9 @@
+{
+  httpListenAddress: ':{{ browser_http_port }}',
+  contentAddressableStorage: {
+    address: 'localhost:{{ storage_grpc_port }}',
+  },
+  actionCache: {
+    address: 'localhost:{{ storage_grpc_port }}',
+  },
+}

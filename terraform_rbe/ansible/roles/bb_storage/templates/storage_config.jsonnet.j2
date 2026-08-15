@@ -1,0 +1,56 @@
+{
+  maximumMessageSizeBytes: 16 * 1024 * 1024,
+  contentAddressableStorage: {
+    backend: {
+      'local': {
+        keyLocationMapOnBlockDevice: {
+          file: { path: '/data/key_location_map', sizeBytes: 16 * 1024 * 1024 },
+        },
+        keyLocationMapMaximumGetAttempts: 8,
+        keyLocationMapMaximumPutAttempts: 32,
+        oldBlocks: 8,
+        currentBlocks: 24,
+        newBlocks: 3,
+        blocksOnBlockDevice: {
+          source: { file: { path: '/data/cas_blocks', sizeBytes: 10 * 1024 * 1024 * 1024 } },
+          spareBlocks: 3,
+        },
+        persistent: {
+          stateDirectoryPath: '/data/cas_persistent_state',
+          minimumEpochInterval: '300s',
+        },
+      },
+    },
+    getAuthorizer: { allow: {} },
+    putAuthorizer: { allow: {} },
+    findMissingAuthorizer: { allow: {} },
+  },
+  actionCache: {
+    backend: {
+      'local': {
+        keyLocationMapOnBlockDevice: {
+          file: { path: '/data/ac_key_location_map', sizeBytes: 4 * 1024 * 1024 },
+        },
+        keyLocationMapMaximumGetAttempts: 8,
+        keyLocationMapMaximumPutAttempts: 32,
+        oldBlocks: 8,
+        currentBlocks: 24,
+        newBlocks: 1,
+        blocksOnBlockDevice: {
+          source: { file: { path: '/data/ac_blocks', sizeBytes: 1024 * 1024 * 1024 } },
+          spareBlocks: 3,
+        },
+        persistent: {
+          stateDirectoryPath: '/data/ac_persistent_state',
+          minimumEpochInterval: '300s',
+        },
+      },
+    },
+    getAuthorizer: { allow: {} },
+    putAuthorizer: { allow: {} },
+  },
+  grpcServers: [{
+    listenAddresses: [':{{ storage_grpc_port }}'],
+    authenticationPolicy: { allow: {} },
+  }],
+}

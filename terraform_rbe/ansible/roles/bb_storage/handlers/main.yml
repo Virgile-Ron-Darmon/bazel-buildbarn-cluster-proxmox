@@ -1,0 +1,5 @@
+- name: restart bb-storage
+  community.docker.docker_container:
+    name: bb-storage
+    state: started
+    restart: true

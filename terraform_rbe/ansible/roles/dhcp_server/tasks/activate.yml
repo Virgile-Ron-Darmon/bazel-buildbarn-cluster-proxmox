@@ -1,0 +1,15 @@
+---
+# Turns on the DHCP server that tasks/main.yml already installed and
+# configured (baked into every clone via source.tf). Only ever included
+# against the master -- running this on more than one host would put two
+# DHCP servers on the same 10.50.0.0/24 subnet.
+#
+# dhcpd.conf is fully static (generated from Terraform's dhcp_reservations
+# at install time), so there's nothing to scan or regenerate here -- just
+# start the daemon.
+
+- name: Ensure isc-dhcp-server is enabled and running
+  systemd:
+    name: isc-dhcp-server
+    enabled: true
+    state: started

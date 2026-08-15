@@ -1,0 +1,14 @@
+- hosts: rbe_master
+  become: true
+  roles:
+    - firewall
+    - bb_storage
+    - bb_scheduler
+    - bb_browser
+
+- hosts: rbe_workers
+  become: true
+  roles:
+    - firewall
+    - bb_worker
+    - bb_runner

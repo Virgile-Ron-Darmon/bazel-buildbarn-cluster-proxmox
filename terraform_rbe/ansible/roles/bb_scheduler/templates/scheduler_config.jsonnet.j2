@@ -1,0 +1,34 @@
+{
+  maximumMessageSizeBytes: 16 * 1024 * 1024,
+  clientGrpcServers: [{
+    listenAddresses: [':{{ scheduler_client_grpc_port }}'],
+    authenticationPolicy: { allow: {} },
+  }],
+  workerGrpcServers: [{
+    listenAddresses: [':{{ scheduler_grpc_port }}'],
+    authenticationPolicy: { allow: {} },
+  }],
+  contentAddressableStorage: {
+    grpc: {
+      client: {
+        address: '{{ master_ip }}:{{ storage_grpc_port }}',
+      },
+    },
+  },
+  executeAuthorizer: { allow: {} },
+  modifyDrainsAuthorizer: { allow: {} },
+  killOperationsAuthorizer: { allow: {} },
+  synchronizeAuthorizer: { allow: {} },
+  actionRouter: {
+    simple: {
+      platformKeyExtractor: { static: { properties: [] } },
+      invocationKeyExtractors: [{ toolInvocationId: {} }],
+      initialSizeClassAnalyzer: {
+        defaultExecutionTimeout: '1800s',
+        maximumExecutionTimeout: '7200s',
+      },
+    },
+  },
+  platformQueueWithNoWorkersTimeout: '900s',
+
+}

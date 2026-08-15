@@ -1,0 +1,31 @@
+- name: Ensure browser config directory exists
+  file:
+    path: /etc/buildbarn/browser
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Template bb-browser config
+  template:
+    src: browser_config.jsonnet.j2
+    dest: /etc/buildbarn/browser/config.jsonnet
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart bb-browser
+
+- name: Ensure bb-browser container is running
+  community.docker.docker_container:
+    name: bb-browser
+    image: "{{ bb_images.browser }}"
+    pull: never
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ browser_http_port }}:{{ browser_http_port }}"
+    volumes:
+      - /etc/buildbarn/browser:/config:ro
+    etc_hosts:
+      host.docker.internal: host-gateway
+    command: /config/config.jsonnet

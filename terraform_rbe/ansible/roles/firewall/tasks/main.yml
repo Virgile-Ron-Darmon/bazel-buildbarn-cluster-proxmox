@@ -1,0 +1,29 @@
+# Permissive firewall for the RBE cluster: nodes talk to each other over
+# the 10.50.0.0/24 static-IP subnet (see inventory.tpl), so rather than
+# enumerate every Buildbarn port individually (grpc, storage, browser,
+# runner, plus whatever a given build action's platform-image tooling
+# needs) this just opens all traffic between cluster members on that
+# subnet. Management access (SSH) is left open more broadly since nodes
+# are also reachable on their DHCP-assigned mgmt_ip during provisioning.
+
+- name: Ensure ufw is installed
+  apt:
+    name: ufw
+    state: present
+    update_cache: true
+
+- name: Allow SSH for management access
+  community.general.ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+
+- name: Allow all traffic between RBE cluster nodes on the internal subnet
+  community.general.ufw:
+    rule: allow
+    src: 10.50.0.0/24
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled
+    policy: allow

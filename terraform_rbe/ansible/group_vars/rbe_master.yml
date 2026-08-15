@@ -1,0 +1,10 @@
+master_ip: "10.50.0.1"
+scheduler_grpc_port: 8981
+scheduler_client_grpc_port: 8982 # added later
+storage_grpc_port: 8980
+browser_http_port: 7984
+storage_data_dir: /var/lib/buildbarn/storage
+
+
+# Container image references live in group_vars/all.yml so the pre-warm
+# playbook and these roles cannot drift apart.

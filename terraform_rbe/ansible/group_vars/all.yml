@@ -1,0 +1,29 @@
+# Single source of truth for every Buildbarn container image.
+#
+# Both the pre-warm playbook (prewarm_images.yml, which pulls these onto
+# source_vm_id before it is cloned) and the deployment roles (bb_storage,
+# bb_scheduler, bb_browser, bb_worker, bb_runner) reference this same map.
+# That guarantees the images baked into the golden image are byte-for-byte
+# the ones the workers later try to run, with no chance of drift.
+#
+# Buildbarn does not publish a "latest" tag; every image is tagged with a
+# timestamp plus commit hash. The tags below are placeholders and are
+# overridden via `ansible-playbook --extra-vars`, which Terraform does in
+# both source.tf and configure.tf. See terraform.tfvars for the real values.
+
+bb_images:
+  storage: "ghcr.io/buildbarn/bb-storage:{{ bb_storage_tag }}"
+  scheduler: "ghcr.io/buildbarn/bb-scheduler:{{ bb_scheduler_tag }}"
+  browser: "ghcr.io/buildbarn/bb-browser:{{ bb_browser_tag }}"
+  worker: "ghcr.io/buildbarn/bb-worker:{{ bb_worker_tag }}"
+  runner_installer: "ghcr.io/buildbarn/bb-runner-installer:{{ bb_runner_tag }}"
+
+# The runner executes build actions inside a vanilla base image with the
+# bb_runner binary mounted in from bb-runner-installer. Pre-warmed too, so
+# clones do not pull it on first action.
+#
+# This image is the actual execution environment for every build action,
+# so it must contain whatever toolchain the build expects to find on the
+# system. debian:bookworm-slim has no compiler, which makes rules_rust
+# fail at link time with "linker /usr/bin/gcc not found", since rules_rust
+# ships a hermetic rustc but still shells out to a system C linker.

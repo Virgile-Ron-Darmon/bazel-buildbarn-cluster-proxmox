@@ -1,0 +1,13 @@
+{
+  grpcServers: [{
+    listenAddresses: [':{{ scheduler_grpc_port }}'],
+    authenticationPolicy: { allow: {} },
+  }],
+  contentAddressableStorage: {
+    address: 'localhost:{{ storage_grpc_port }}',
+  },
+  actionCache: {
+    address: 'localhost:{{ storage_grpc_port }}',
+  },
+  jobsPendingMax: 1000,
+}
