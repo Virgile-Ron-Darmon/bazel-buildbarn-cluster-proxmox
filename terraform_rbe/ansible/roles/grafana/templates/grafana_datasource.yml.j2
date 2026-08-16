@@ -1,0 +1,13 @@
+# Managed by Ansible (grafana role). Do not edit by hand.
+# Points Grafana at the Prometheus running alongside it on the master,
+# addressed by cluster IP so it stays correct if Grafana is moved later.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://{{ master_ip }}:{{ prometheus_port }}
+    isDefault: true
+    editable: false

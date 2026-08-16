@@ -5,6 +5,23 @@ storage_grpc_port: 8980
 browser_http_port: 7984
 storage_data_dir: /var/lib/buildbarn/storage
 
+# Diagnostics (Prometheus metrics) ports for the master's three co-located
+# components. Each is distinct so they don't collide on the shared master
+# host, and so the scrape config is a flat IP:port list with no localhost
+# special-casing -- every target, including these, is scraped via 10.50.0.1.
+storage_diag_port: 9980
+scheduler_diag_port: 9981
+browser_diag_port: 9982
+
+# Monitoring stack (Prometheus + Grafana), master-only.
+prometheus_port: 9090
+grafana_port: 3000
+prometheus_retention: 15d
+prometheus_data_dir: /var/lib/prometheus
+grafana_data_dir: /var/lib/grafana
+grafana_admin_user: admin
+grafana_admin_password: admin
+
 
 # Container image references live in group_vars/all.yml so the pre-warm
 # playbook and these roles cannot drift apart.

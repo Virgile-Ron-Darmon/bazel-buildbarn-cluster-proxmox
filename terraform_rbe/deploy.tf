@@ -107,6 +107,15 @@ resource "proxmox_virtual_environment_vm" "rbe_worker" {
   stop_on_destroy = true
   #started   = count.index == 0 ? true : false
 
+    cpu {
+    cores = count.index == 0 ? 8 : 4
+    type  = "host"
+  }
+
+  memory {
+    dedicated = count.index == 0 ? 16384 : 4096   # MB, so 8192 = 8 GiB
+    floating  = 4096
+  }
 
   clone {
     # Destination is node_name above; this is where the *source* template

@@ -1,0 +1,41 @@
+# Managed by Ansible (prometheus role). Do not edit by hand.
+#
+# Every target is addressed by its cluster IP, including the master's own
+# co-located components via {{ master_ip }} -- nothing is scraped over
+# localhost. Worker and node targets are built from the Ansible inventory
+# (groups['rbe_workers']), so the scrape list tracks the fleet automatically.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['{{ master_ip }}:{{ prometheus_port }}']
+
+  - job_name: bb-storage
+    static_configs:
+      - targets: ['{{ master_ip }}:{{ storage_diag_port }}']
+
+  - job_name: bb-scheduler
+    static_configs:
+      - targets: ['{{ master_ip }}:{{ scheduler_diag_port }}']
+
+  - job_name: bb-browser
+    static_configs:
+      - targets: ['{{ master_ip }}:{{ browser_diag_port }}']
+
+  - job_name: bb-worker
+    static_configs:
+      - targets:
+{% for host in groups['rbe_workers'] %}
+          - '{{ hostvars[host].ansible_host }}:{{ hostvars[host].worker_diag_port }}'
+{% endfor %}
+
+  - job_name: node
+    static_configs:
+      - targets:
+          - '{{ master_ip }}:{{ node_exporter_port }}'
+{% for host in groups['rbe_workers'] %}
+          - '{{ hostvars[host].ansible_host }}:{{ node_exporter_port }}'
+{% endfor %}

@@ -1,0 +1,15 @@
+# Managed by Ansible (grafana role). Tells Grafana to load any
+# dashboard JSON found under the json/ directory below.
+apiVersion: 1
+
+providers:
+  - name: RBE
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
+      foldersFromFilesStructure: false

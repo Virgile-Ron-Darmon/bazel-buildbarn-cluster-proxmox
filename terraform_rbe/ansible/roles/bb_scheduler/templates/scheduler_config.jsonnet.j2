@@ -1,5 +1,17 @@
 {
   maximumMessageSizeBytes: 16 * 1024 * 1024,
+  // Diagnostics HTTP server exposes Prometheus metrics. Bound on all
+  // interfaces so the master's Prometheus scrapes it via 10.50.0.1, treated
+  // identically to a remote target.
+  global: {
+    diagnosticsHttpServer: {
+      httpServers: [{
+        listenAddresses: [':{{ scheduler_diag_port }}'],
+        authenticationPolicy: { allow: {} },
+      }],
+      enablePrometheus: true,
+    },
+  },
   clientGrpcServers: [{
     listenAddresses: [':{{ scheduler_client_grpc_port }}'],
     authenticationPolicy: { allow: {} },

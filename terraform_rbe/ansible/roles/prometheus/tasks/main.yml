@@ -1,0 +1,53 @@
+# Prometheus, master only. The image is pre-warmed onto the golden image
+# (group_vars/all.yml, monitoring_images) and runs with pull: never, like
+# every other container in the cluster.
+#
+# Prometheus scrapes every component by its cluster IP -- including the
+# master's own storage/scheduler/browser via master_ip -- so nothing is
+# scraped over localhost and components can be split onto separate hosts
+# later without changing the scrape model. See templates/prometheus.yml.j2.
+
+- name: Ensure Prometheus config directory exists
+  file:
+    path: /etc/prometheus
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure Prometheus data directory exists
+  file:
+    path: "{{ prometheus_data_dir }}"
+    state: directory
+    # The prometheus image runs as uid 65534 (nobody); the TSDB volume must
+    # be writable by that user.
+    owner: '65534'
+    group: '65534'
+    mode: '0755'
+
+- name: Template Prometheus config
+  template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart prometheus
+
+- name: Ensure Prometheus container is running
+  community.docker.docker_container:
+    name: prometheus
+    image: "{{ monitoring_images.prometheus }}"
+    pull: never
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ prometheus_port }}:{{ prometheus_port }}"
+    volumes:
+      - /etc/prometheus:/etc/prometheus:ro
+      - "{{ prometheus_data_dir }}:/prometheus"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time={{ prometheus_retention }}'
+      - '--web.listen-address=:{{ prometheus_port }}'

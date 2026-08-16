@@ -9,6 +9,11 @@
 #      every clone's disk, which starts serving 10.50.x.x leases to every
 #      other worker's pre-set 02:ee:ee:ee:XX:YY MAC on ens19.
 #
+# It also adds a stable static secondary IP on the master's ens18 (mgmt
+# interface) via ens18_static_ip, so the Grafana/Prometheus URLs have a
+# fixed host that doesn't depend on the mgmt DHCP lease. That address
+# (master_mgmt_static_ip / master_mgmt_netmask) is passed in from Terraform.
+#
 # Everyone else's static IP comes purely from their Terraform-assigned MAC
 # plus this DHCP server; no per-host Ansible touch is needed for
 # addressing beyond this single master bootstrap.
@@ -22,6 +27,10 @@
 
   roles:
     - ens19_static_ip
+    # Adds the mgmt-side secondary static IP (10.0.2.123 by default). Runs
+    # after ens19 so the cluster network is already pinned; adding a secondary
+    # address on ens18 does not disturb the DHCP primary this play arrived on.
+    - ens18_static_ip
 
   tasks:
     - name: Activate the DHCP server on the master

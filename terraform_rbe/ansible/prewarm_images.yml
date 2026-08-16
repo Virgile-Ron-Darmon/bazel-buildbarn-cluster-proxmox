@@ -30,6 +30,9 @@
           - bb_worker_tag is defined
           - bb_runner_tag is defined
           - bb_runner_base_image is defined
+          - prometheus_tag is defined
+          - grafana_tag is defined
+          - node_exporter_tag is defined
         fail_msg: >-
           One or more Buildbarn image tags are still set to REPLACE_ME.
           Set real, mutually-compatible tags in terraform.tfvars. See
@@ -39,7 +42,7 @@
       command: docker info
       changed_when: false
 
-    - name: Pull all Buildbarn images into the golden image
+    - name: Pull all Buildbarn and monitoring images into the golden image
       community.docker.docker_image:
         name: "{{ item }}"
         source: pull
@@ -51,6 +54,9 @@
         - "{{ bb_images.worker }}"
         - "{{ bb_images.runner_installer }}"
         - "{{ bb_runner_base_image }}"
+        - "{{ monitoring_images.prometheus }}"
+        - "{{ monitoring_images.grafana }}"
+        - "{{ monitoring_images.node_exporter }}"
 
     - name: List cached images for confirmation
       command: docker images --format '{{ "{{" }}.Repository{{ "}}" }}:{{ "{{" }}.Tag{{ "}}" }}'

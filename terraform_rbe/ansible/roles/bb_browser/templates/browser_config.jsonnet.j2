@@ -1,17 +1,33 @@
 {
   maximumMessageSizeBytes: 16 * 1024 * 1024,
+  // Diagnostics HTTP server exposes Prometheus metrics. Bound on all
+  // interfaces so the master's Prometheus scrapes it via 10.50.0.1, treated
+  // identically to a remote target.
+  global: {
+    diagnosticsHttpServer: {
+      httpServers: [{
+        listenAddresses: [':{{ browser_diag_port }}'],
+        authenticationPolicy: { allow: {} },
+      }],
+      enablePrometheus: true,
+    },
+  },
   blobstore: {
     contentAddressableStorage: {
       grpc: {
         client: {
-          address: 'host.docker.internal:{{ storage_grpc_port }}',
+          // Reaches storage over the routable cluster network by its real IP,
+          // not the host.docker.internal loopback. Every inter-component link
+          // is now a cluster IP, so storage can move off the master later
+          // with only this address changing.
+          address: '{{ master_ip }}:{{ storage_grpc_port }}',
         },
       },
     },
     actionCache: {
       grpc: {
         client: {
-          address: 'host.docker.internal:{{ storage_grpc_port }}',
+          address: '{{ master_ip }}:{{ storage_grpc_port }}',
         },
       },
     },

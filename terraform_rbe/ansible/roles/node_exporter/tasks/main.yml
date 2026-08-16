@@ -1,0 +1,29 @@
+# node_exporter runs on every cluster host (master and workers) to expose
+# OS-level metrics (CPU, memory, disk, network) to the master's Prometheus.
+# The image is pre-warmed onto the golden image (group_vars/all.yml,
+# monitoring_images) so this starts with pull: never, like every other
+# container in the cluster.
+#
+# --path.rootfs=/host lets the exporter, running in a container, report the
+# real host's filesystem/metrics rather than the container's own view.
+
+- name: Ensure node_exporter container is running
+  community.docker.docker_container:
+    name: node-exporter
+    image: "{{ monitoring_images.node_exporter }}"
+    pull: never
+    state: started
+    restart_policy: always
+    # host network so the exporter sees the host's real interfaces and its
+    # metrics port is reachable at the host's cluster IP with no mapping.
+    network_mode: host
+    pid_mode: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/host'
+      - '--web.listen-address=:{{ node_exporter_port }}'

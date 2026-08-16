@@ -39,6 +39,9 @@ resource "null_resource" "prewarm_source_images" {
     bb_worker_tag        = var.bb_worker_tag
     bb_runner_tag        = var.bb_runner_tag
     bb_runner_base_image = var.bb_runner_base_image
+    prometheus_tag       = var.prometheus_tag
+    grafana_tag          = var.grafana_tag
+    node_exporter_tag    = var.node_exporter_tag
   }
 
   provisioner "local-exec" {
@@ -49,7 +52,10 @@ resource "null_resource" "prewarm_source_images" {
         --extra-vars "bb_browser_tag=${var.bb_browser_tag}" \
         --extra-vars "bb_worker_tag=${var.bb_worker_tag}" \
         --extra-vars "bb_runner_tag=${var.bb_runner_tag}" \
-        --extra-vars "bb_runner_base_image=${var.bb_runner_base_image}"
+        --extra-vars "bb_runner_base_image=${var.bb_runner_base_image}" \
+        --extra-vars "prometheus_tag=${var.prometheus_tag}" \
+        --extra-vars "grafana_tag=${var.grafana_tag}" \
+        --extra-vars "node_exporter_tag=${var.node_exporter_tag}"
     EOT
     environment = {
       ANSIBLE_HOST_KEY_CHECKING = "False"

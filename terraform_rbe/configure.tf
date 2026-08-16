@@ -19,8 +19,8 @@ locals {
     "10.50.${oc[0]}.${oc[1]}"
   ]
 
-  # Bumping any Buildbarn image tag re-runs site.yml on its own, without
-  # touching the earlier stages.
+  # Bumping any Buildbarn or monitoring image tag re-runs site.yml on its own,
+  # without touching the earlier stages.
   bb_image_tags = join(",", [
     var.bb_storage_tag,
     var.bb_scheduler_tag,
@@ -28,6 +28,9 @@ locals {
     var.bb_worker_tag,
     var.bb_runner_tag,
     var.bb_runner_base_image,
+    var.prometheus_tag,
+    var.grafana_tag,
+    var.node_exporter_tag,
   ])
 }
 
@@ -69,10 +72,18 @@ resource "null_resource" "bootstrap_master" {
   triggers = {
     master    = proxmox_virtual_environment_vm.rbe_worker[0].id
     inventory = sha1(local_file.master_mgmt_inventory.content)
+    # Re-run if the master's stable mgmt address changes, so ens18's secondary
+    # static IP is re-applied.
+    mgmt_ip   = var.master_mgmt_static_ip
+    mgmt_mask = var.master_mgmt_netmask
   }
 
   provisioner "local-exec" {
-    command = "ansible-playbook -i ${path.module}/ansible/inventory/inventory_master.ini ${path.module}/ansible/bootstrap_master.yml"
+    command = <<-EOT
+      ansible-playbook -i ${path.module}/ansible/inventory/inventory_master.ini ${path.module}/ansible/bootstrap_master.yml \
+        --extra-vars "master_mgmt_static_ip=${var.master_mgmt_static_ip}" \
+        --extra-vars "master_mgmt_netmask=${var.master_mgmt_netmask}"
+    EOT
 
     environment = {
       ANSIBLE_HOST_KEY_CHECKING = "False"
@@ -136,7 +147,10 @@ resource "null_resource" "run_ansible_buildbarn" {
         --extra-vars "bb_browser_tag=${var.bb_browser_tag}" \
         --extra-vars "bb_worker_tag=${var.bb_worker_tag}" \
         --extra-vars "bb_runner_tag=${var.bb_runner_tag}" \
-        --extra-vars "bb_runner_base_image=${var.bb_runner_base_image}"
+        --extra-vars "bb_runner_base_image=${var.bb_runner_base_image}" \
+        --extra-vars "prometheus_tag=${var.prometheus_tag}" \
+        --extra-vars "grafana_tag=${var.grafana_tag}" \
+        --extra-vars "node_exporter_tag=${var.node_exporter_tag}"
     EOT
 
     environment = {
