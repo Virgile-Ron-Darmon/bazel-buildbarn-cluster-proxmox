@@ -8,10 +8,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Verilator
+      #- name: Install Verilator
+      #  run: |
+      #    sudo apt-get update
+      #    sudo apt-get install -y verilator
+      
+      - name: Install Verilator Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y verilator
+          sudo apt-get install -y --no-install-recommends bison flex autoconf automake perl
+          sudo apt install libfl-dev
+          sudo apt install help2man
 
       - name: Install Bazelisk
         run: |

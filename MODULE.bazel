@@ -30,3 +30,22 @@ pip.parse(
     requirements_lock = "//src-verification/hardware:requirements_lock.txt",
 )
 use_repo(pip, "pypi")
+
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+bazel_dep(name = "rules_foreign_cc", version = "0.15.1")
+
+http_archive(
+    name = "verilator_src",
+    urls = ["https://github.com/verilator/verilator/archive/refs/tags/v5.024.tar.gz"],
+    strip_prefix = "verilator-5.024",
+    integrity = "sha256-iLBMlT5xZcZw1qcA8gLO+Zx0aghntOLv4dfqeJ3uNfM=",
+    patch_cmds = ["autoconf"],
+    build_file_content = """
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:public"],
+)
+""",
+)

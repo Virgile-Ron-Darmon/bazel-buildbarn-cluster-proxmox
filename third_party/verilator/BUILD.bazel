@@ -1,0 +1,26 @@
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+
+configure_make(
+    name = "verilator_build",
+    lib_source = "@verilator_src//:all_srcs",
+    configure_in_place = True,
+    configure_options = [
+        "CXX=g++",
+        "CC=gcc",
+    ],
+    env = {
+        "CCACHE_DIR": "/tmp/ccache",
+    },
+    args = ["-j`nproc`"],
+    out_binaries = ["verilator_bin"],
+    out_data_dirs = ["share"],
+    visibility = ["//visibility:public"],
+)
+
+sh_binary(
+    name = "verilator",
+    srcs = ["verilator.sh"],
+    data = ["//third_party/verilator:verilator_build"],
+    visibility = ["//visibility:public"],
+)
