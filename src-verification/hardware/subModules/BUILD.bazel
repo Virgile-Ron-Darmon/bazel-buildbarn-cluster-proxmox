@@ -15,13 +15,20 @@ verilator_transpile(
     verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE"],
 )
 
-
-
-
 py_test(
     name = "alu_test",
     srcs = ["alu.py"],
     main = "alu.py",
+    deps = [
+        "@pypi//cocotb",
+        "@pypi//pytest",
+    ],
+)
+
+py_test(
+    name = "control_unit",
+    srcs = ["control_unit.py"],
+    main = "control_unit.py",
     deps = [
         "@pypi//cocotb",
         "@pypi//pytest",

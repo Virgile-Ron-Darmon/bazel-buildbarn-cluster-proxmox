@@ -7,12 +7,24 @@ def _verilator_transpile_impl(ctx):
 
     all_srcs = ctx.files.srcs + ctx.files.deps
 
+    verilator_cpp = None
+    for f in ctx.files._cocotb_whl:
+        if f.path.endswith("cocotb/share/lib/verilator/verilator.cpp"):
+            verilator_cpp = f
+            break
+    if verilator_cpp == None:
+        fail("verilator.cpp not found in cocotb wheel — check cocotb version/layout")
+
+    all_srcs = all_srcs + [verilator_cpp]
+
+
     out_dir = ctx.actions.declare_directory(ctx.label.name + "_obj_dir")
 
     verilator = ctx.executable._verilator
 
     args = ctx.actions.args()
     args.add("--cc")  # emit C++ output
+    args.add("--exe")  # creates executable
     args.add("--top-module", top_module)
     args.add("-Mdir", out_dir.path)
 
@@ -60,6 +72,10 @@ verilator_transpile = rule(
         "verilator_flags": attr.string_list(
             default = [],
             doc = "Extra flags passed straight through to Verilator (e.g. --trace, -Wall).",
+        ),
+        "_cocotb_whl": attr.label(
+            default = Label("@pypi//cocotb:extracted_whl_files"),
+            allow_files = True,
         ),
         "_verilator": attr.label(
             default = Label("//src-verification-bazel/tools:verilator"),
