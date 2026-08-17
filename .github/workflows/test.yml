@@ -22,7 +22,7 @@ jobs:
       - name: Check Verilator version
         run: verilator --version
         
-      - name: Check Bazel version
+      - name: Check Bazel versions
         run: bazel version
 
       #- name: Bazel Build
