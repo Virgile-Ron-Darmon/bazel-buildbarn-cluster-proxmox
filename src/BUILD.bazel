@@ -1,4 +1,4 @@
-load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
 
 N = 100  # how many binaries to generate
 
@@ -10,3 +10,10 @@ N = 100  # how many binaries to generate
     )
     for i in range(N)
 ]
+
+
+rust_test(
+    name = "slow_bin_test",
+    srcs = ["main.rs"],
+    edition = "2021",
+)
