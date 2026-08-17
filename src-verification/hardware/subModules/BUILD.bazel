@@ -1,4 +1,5 @@
 load("//src-verification-bazel:hardware-rules.bzl", "verilator_transpile")
+load("@rules_python//python:defs.bzl", "py_test")
 
 filegroup(
     name = "risc_v_deps",
@@ -12,4 +13,17 @@ verilator_transpile(
     srcs = ["alu.sv"],
     top_module = "alu",
     verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE"],
+)
+
+
+
+
+py_test(
+    name = "alu_test",
+    srcs = ["alu.py"],
+    main = "alu.py",
+    deps = [
+        "@pypi//cocotb",
+        "@pypi//pytest",
+    ],
 )

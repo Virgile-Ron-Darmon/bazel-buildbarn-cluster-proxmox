@@ -27,6 +27,6 @@ pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 pip.parse(
     hub_name = "pypi",
     python_version = "3.12",
-    requirements_lock = "//src/python/app_one:requirements_lock.txt",
+    requirements_lock = "//src-verification/hardware:requirements_lock.txt",
 )
 use_repo(pip, "pypi")

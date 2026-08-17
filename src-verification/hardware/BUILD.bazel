@@ -1,4 +1,6 @@
 load("//src-verification-bazel:hardware-rules.bzl", "verilator_transpile")
+load("@rules_python//python:pip.bzl", "compile_pip_requirements")
+
 # //src-verification-bazel/hardware-rules.bzl
 
 
@@ -8,4 +10,10 @@ verilator_transpile(
     deps = ["//src-verification/hardware/subModules:risc_v_deps",],
     top_module = "risc_v",
     verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE"],
+)
+
+compile_pip_requirements(
+    name = "requirements",
+    src = "requirements.txt",
+    requirements_txt = "requirements_lock.txt",
 )
