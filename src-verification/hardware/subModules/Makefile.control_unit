@@ -1,0 +1,8 @@
+SIM ?= verilator
+TOPLEVEL_LANG ?= verilog
+
+VERILOG_SOURCES += $(PWD)/control_unit.sv
+TOPLEVEL = control_unit
+MODULE = control_unit
+
+include $(shell cocotb-config --makefiles)/Makefile.sim
