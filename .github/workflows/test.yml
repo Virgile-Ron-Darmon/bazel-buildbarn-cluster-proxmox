@@ -26,8 +26,8 @@ jobs:
           chmod +x bazelisk
           sudo mv bazelisk /usr/local/bin/bazel
 
-      - name: Check Verilator version
-        run: verilator --version
+      #- name: Check Verilator version
+      #  run: verilator --version
         
       - name: Check Bazel versions
         run: bazel version
