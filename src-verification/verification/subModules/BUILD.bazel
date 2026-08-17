@@ -1,11 +1,11 @@
 load("@rules_python//python:defs.bzl", "py_test")
 
 
-#py_test(
-#    name = "alu",
-#    srcs = ["alu.py"],
-#    deps = [
-#        "@pypi//cocotb",
-#        "@pypi//pytest",
-#    ],
-#)
+py_test(
+    name = "alu",
+    srcs = ["alu.py"],
+    deps = [
+        "@pypi//cocotb",
+        "@pypi//pytest",
+    ],
+)
