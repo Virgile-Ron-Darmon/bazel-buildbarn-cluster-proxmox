@@ -25,8 +25,8 @@ jobs:
       - name: Check Bazel version
         run: bazel version
 
-#      - name: Build
-#        run: bazel build //...
+      #- name: Bazel Build
+      #  run: bazel build //...
 
-      - name: Test
+      - name: Bazel Test
         run: bazel test //...

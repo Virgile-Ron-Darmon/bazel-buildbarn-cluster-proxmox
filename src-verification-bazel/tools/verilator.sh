@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -euo pipefail
  
 VERILATOR_BIN="$(command -v verilator)"
