@@ -7,5 +7,5 @@ verilator_transpile(
     srcs = ["risc_v.sv"],
     deps = ["//src-verification/hardware/subModules:risc_v_deps",],
     top_module = "risc_v",
-    verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE", "--sandbox_debug"],
+    verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE"],
 )

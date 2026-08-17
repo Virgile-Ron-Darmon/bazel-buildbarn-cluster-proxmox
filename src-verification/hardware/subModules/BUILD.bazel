@@ -11,5 +11,5 @@ verilator_transpile(
     name = "alu",
     srcs = ["alu.sv"],
     top_module = "alu",
-    verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE", "--sandbox_debug"],
+    verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE"],
 )
