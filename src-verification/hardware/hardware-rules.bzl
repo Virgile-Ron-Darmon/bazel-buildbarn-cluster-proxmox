@@ -78,7 +78,7 @@ verilator_transpile = rule(
             allow_files = True,
         ),
         "_verilator": attr.label(
-            default = Label("//src-verification-bazel/tools:verilator"),
+            default = Label("//third_party/verilator:verilator"),
             executable = True,
             cfg = "exec",
         ),
