@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERILATOR_INSTALL="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+# Runfiles root: when a sh_binary runs, its runfiles tree sits at $0.runfiles.
+RUNFILES="${RUNFILES_DIR:-$0.runfiles}"
 
-VERILATOR_BIN="$(find "${VERILATOR_INSTALL}" -path '*/verilator_build/bin/verilator_bin' 2>/dev/null | head -n1)"
+VERILATOR_BIN="${RUNFILES}/_main/third_party/verilator/verilator_build/bin/verilator_bin"
 
-if [[ -z "${VERILATOR_BIN}" ]]; then
-  echo "error: hermetic verilator not found." >&2
+if [[ ! -x "${VERILATOR_BIN}" ]]; then
+  echo "error: hermetic verilator not found at ${VERILATOR_BIN}" >&2
   exit 1
 fi
 
-ROOT="$(dirname "$(dirname "${VERILATOR_BIN}")")/share/verilator"
-export VERILATOR_ROOT="${ROOT}"
+export VERILATOR_ROOT="$(dirname "$(dirname "${VERILATOR_BIN}")")/share/verilator"
 
 exec "${VERILATOR_BIN}" "$@"

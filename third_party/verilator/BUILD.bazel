@@ -22,5 +22,6 @@ sh_binary(
     name = "verilator",
     srcs = ["verilator.sh"],
     data = ["//third_party/verilator:verilator_build"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
     visibility = ["//visibility:public"],
 )
