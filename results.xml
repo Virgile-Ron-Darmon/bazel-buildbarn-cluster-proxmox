@@ -1,0 +1,7 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1787064864" />
+    <testcase name="test_alu_add" classname="alu" file="/home/virgule/Desktop/demos/scale_rbe_v2/src-verification/hardware/subModules/alu.py" lineno="4" time="0.0008664131164550781" sim_time_ns="1.0" ratio_time="1154.1838194826637" />
+    <testcase name="test_alu_zero_flag" classname="alu" file="/home/virgule/Desktop/demos/scale_rbe_v2/src-verification/hardware/subModules/alu.py" lineno="13" time="0.0003063678741455078" sim_time_ns="1.0" ratio_time="3264.049805447471" />
+  </testsuite>
+</testsuites>

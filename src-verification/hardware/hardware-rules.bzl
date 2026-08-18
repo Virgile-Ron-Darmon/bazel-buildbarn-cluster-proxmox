@@ -1,6 +1,8 @@
 """
 Bazel rule transpiling Verilator to C++.
 """
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "make")
 
 def _verilator_transpile_impl(ctx):
     top_module = ctx.attr.top_module
@@ -107,3 +109,50 @@ verilator_transpile = rule(
         ),
     },
 )
+
+
+def cocotb_module_test(name, top_module, srcs, test_src, test_module, deps = [], verilator_flags = []):
+    verilator_transpile(
+        name = name + "_verilated",
+        srcs = srcs,
+        deps = deps,
+        top_module = top_module,
+        verilator_flags = verilator_flags,
+    )
+
+    native.filegroup(
+        name = name + "_obj_dir_files",
+        srcs = [":" + name + "_verilated"],
+    )
+
+    make(
+        name = name + "_bin",
+        lib_source = ":" + name + "_obj_dir_files",
+        deps = ["//third_party/verilator:verilator_build"],
+        env = {"CCACHE_DISABLE": "1"},
+        targets = [
+            "-C " + name + "_verilated_obj_dir -f Vtop.mk VERILATOR_ROOT=$$EXT_BUILD_DEPS$$/verilator_build/share/verilator LDFLAGS=-Wl,-rpath,\\$$ORIGIN LDLIBS=-L.\\ -l:libcocotbvpi_verilator.so\\ -l:libgpi.so\\ -l:libgpilog.so",
+        ],
+        postfix_script = "mkdir -p $$INSTALLDIR/bin && cp " + name + "_verilated_obj_dir/Vtop $$INSTALLDIR/bin/Vtop",
+        out_binaries = ["Vtop"],
+    )
+
+    sh_test(
+        name = name,
+        srcs = ["//src-verification/hardware:cocotb_test.sh"],
+        args = [
+            "_main/%s/%s_bin/bin/Vtop" % (native.package_name(), name),
+            "_main/%s/%s_verilated_obj_dir" % (native.package_name(), name),
+            "$(rlocationpath @python_3_12//:python3)",
+            native.package_name(),
+            test_module,
+            top_module,
+        ],
+        data = [
+            ":" + name + "_bin",
+            ":" + name + "_verilated",
+            test_src,
+            "@pypi//cocotb:extracted_whl_files",
+            "@python_3_12//:python3",
+        ],
+    )

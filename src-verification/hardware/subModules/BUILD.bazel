@@ -1,4 +1,4 @@
-load("//src-verification/hardware:hardware-rules.bzl", "verilator_transpile")
+load("//src-verification/hardware:hardware-rules.bzl", "verilator_transpile", "cocotb_module_test")
 load("@rules_python//python:defs.bzl", "py_test")
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "make")
 
@@ -31,12 +31,25 @@ py_test(
     ],
 )
 
+cocotb_module_test(
+    name = "alu_test_cocotb",
+    top_module = "alu",
+    srcs = ["alu.sv"],
+    test_src = "alu.py",
+    test_module = "alu",
+    verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE", "--public-flat-rw"],
+)
+
 
 verilator_transpile(
     name = "alu",
     srcs = ["alu.sv"],
     top_module = "alu",
-    verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE"],
+    verilator_flags = [
+        "--trace",
+        "-Wno-CASEINCOMPLETE",
+        "--public-flat-rw",
+    ],
 )
 
 filegroup(

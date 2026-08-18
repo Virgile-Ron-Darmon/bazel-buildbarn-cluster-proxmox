@@ -1,6 +1,6 @@
 load("//src-verification/hardware:hardware-rules.bzl", "verilator_transpile")
 load("@rules_python//python:pip.bzl", "compile_pip_requirements")
-
+exports_files(["cocotb_test.sh"])
 # //src-verification-bazel/hardware-rules.bzl
 
 
