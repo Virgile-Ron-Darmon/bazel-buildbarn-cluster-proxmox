@@ -32,8 +32,8 @@ jobs:
       - name: Check Bazel versions
         run: bazel version
 
-      #- name: Bazel Build
-      #  run: bazel build //...
+      - name: Bazel Build
+        run: bazel build //... --verbose_failures
 
       - name: Bazel Test
-        run: bazel test //...
+        run: bazel test //... --test_output=errors
