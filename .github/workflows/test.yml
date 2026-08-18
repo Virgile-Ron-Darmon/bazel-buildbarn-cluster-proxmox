@@ -33,7 +33,7 @@ jobs:
         run: bazel version
 
       - name: Bazel Build
-        run: bazel build //... --verbose_failures
+        run: bazel --config=rbe build //... --verbose_failures
 
       - name: Bazel Test
-        run: bazel test //... --test_output=errors
+        run: bazel test --config=rbe //... --test_output=errors

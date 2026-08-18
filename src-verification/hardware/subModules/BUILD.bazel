@@ -40,6 +40,14 @@ cocotb_module_test(
     verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE", "--public-flat-rw"],
 )
 
+cocotb_module_test(
+    name = "control_unit_test_cocotb",
+    top_module = "control_unit",
+    srcs = ["control_unit.sv"],
+    test_src = "control_unit.py",
+    test_module = "control_unit",
+    verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE", "--public-flat-rw"],
+)
 
 verilator_transpile(
     name = "alu",
