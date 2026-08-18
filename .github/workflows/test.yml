@@ -19,7 +19,6 @@ jobs:
           sudo apt-get install -y --no-install-recommends bison flex autoconf automake perl
           sudo apt install libfl-dev
           sudo apt install help2man
-          apt-get install -y flex bison
 
       - name: Install Bazelisk
         run: |
