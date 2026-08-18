@@ -60,6 +60,7 @@ make(
     targets = [
         "-C alu_obj_dir -f Vtop.mk VERILATOR_ROOT=$$EXT_BUILD_DEPS$$/verilator_build/share/verilator LDFLAGS=-Wl,-rpath,\\$$ORIGIN LDLIBS=-L.\\ -l:libcocotbvpi_verilator.so\\ -l:libgpi.so\\ -l:libgpilog.so",
     ],
+    postfix_script = "mkdir -p $$INSTALLDIR/bin && cp alu_obj_dir/Vtop $$INSTALLDIR/bin/Vtop",
     out_binaries = ["Vtop"],
     visibility = ["//visibility:public"],
 )
