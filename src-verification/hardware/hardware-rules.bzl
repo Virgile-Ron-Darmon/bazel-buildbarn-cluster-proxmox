@@ -154,5 +154,6 @@ def cocotb_module_test(name, top_module, srcs, test_src, test_module, deps = [],
             test_src,
             "@pypi//cocotb:extracted_whl_files",
             "@python_3_12//:python3",
+            "@python_3_12//:files",
         ],
     )
