@@ -37,9 +37,9 @@ bazel_dep(name = "rules_foreign_cc", version = "0.15.1")
 
 http_archive(
     name = "verilator_src",
-    urls = ["https://github.com/verilator/verilator/archive/refs/tags/v5.024.tar.gz"],
-    strip_prefix = "verilator-5.024",
-    integrity = "sha256-iLBMlT5xZcZw1qcA8gLO+Zx0aghntOLv4dfqeJ3uNfM=",
+    urls = ["https://github.com/verilator/verilator/archive/refs/tags/v5.034.tar.gz"],
+    strip_prefix = "verilator-5.034",
+    integrity = "sha256-AC2pjjFspu7kBAf13rfXxDoHiIR9OckNTTHdu8AwIOg=",
     patch_cmds = ["autoconf"],
     build_file_content = """
 filegroup(

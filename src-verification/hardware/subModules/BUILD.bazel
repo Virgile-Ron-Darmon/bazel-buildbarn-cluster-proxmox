@@ -1,5 +1,6 @@
 load("//src-verification/hardware:hardware-rules.bzl", "verilator_transpile")
 load("@rules_python//python:defs.bzl", "py_test")
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "make")
 
 filegroup(
     name = "risc_v_deps",
@@ -8,12 +9,7 @@ filegroup(
 )
 
 
-verilator_transpile(
-    name = "alu",
-    srcs = ["alu.sv"],
-    top_module = "alu",
-    verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE"],
-)
+
 
 py_test(
     name = "alu_test",
@@ -33,4 +29,37 @@ py_test(
         "@pypi//cocotb",
         "@pypi//pytest",
     ],
+)
+
+
+verilator_transpile(
+    name = "alu",
+    srcs = ["alu.sv"],
+    top_module = "alu",
+    verilator_flags = ["--trace", "-Wno-CASEINCOMPLETE"],
+)
+
+filegroup(
+    name = "alu_obj_dir_files",
+    srcs = [":alu"],
+)
+
+
+filegroup(
+    name = "cocotb_vpi_verilator_so",
+    srcs = ["@pypi//cocotb:extracted_whl_files"],  # then narrow — see note
+)
+
+make(
+    name = "alu_bin",
+    lib_source = ":alu_obj_dir_files",
+    deps = ["//third_party/verilator:verilator_build"],
+    env = {
+        "CCACHE_DISABLE": "1",
+    },
+    targets = [
+        "-C alu_obj_dir -f Vtop.mk VERILATOR_ROOT=$$EXT_BUILD_DEPS$$/verilator_build/share/verilator LDFLAGS=-Wl,-rpath,\\$$ORIGIN LDLIBS=-L.\\ -l:libcocotbvpi_verilator.so\\ -l:libgpi.so\\ -l:libgpilog.so",
+    ],
+    out_binaries = ["Vtop"],
+    visibility = ["//visibility:public"],
 )
