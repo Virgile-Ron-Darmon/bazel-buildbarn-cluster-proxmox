@@ -3,6 +3,11 @@ scheduler_grpc_port: 8981
 storage_grpc_port: 8980
 worker_concurrency: 4
 
+# Diagnostics (Prometheus metrics) port. Same on every worker; the master's
+# Prometheus tells them apart by cluster IP (10.50.x.x), the "as if remote"
+# scrape model.
+worker_diag_port: 9983
+
 # Shared between bb-worker and bb-runner on each compute node.
 # These must all live under a single parent directory that is mounted
 # into the containers as one volume. bb-worker hardlinks files from the

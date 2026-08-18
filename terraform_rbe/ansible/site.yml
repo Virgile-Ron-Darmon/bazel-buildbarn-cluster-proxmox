@@ -5,6 +5,11 @@
     - bb_storage
     - bb_scheduler
     - bb_browser
+    - node_exporter
+    # prometheus runs after the components it scrapes; grafana after prometheus,
+    # its datasource. Two roles so either can move to its own host later.
+    - prometheus
+    - grafana
 
 - hosts: rbe_workers
   become: true
@@ -12,3 +17,4 @@
     - firewall
     - bb_worker
     - bb_runner
+    - node_exporter

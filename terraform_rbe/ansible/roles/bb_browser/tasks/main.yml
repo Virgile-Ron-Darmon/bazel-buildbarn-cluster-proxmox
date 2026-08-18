@@ -24,8 +24,7 @@
     restart_policy: always
     ports:
       - "{{ browser_http_port }}:{{ browser_http_port }}"
+      - "{{ browser_diag_port }}:{{ browser_diag_port }}"
     volumes:
       - /etc/buildbarn/browser:/config:ro
-    etc_hosts:
-      host.docker.internal: host-gateway
     command: /config/config.jsonnet

@@ -38,6 +38,11 @@
     pull: never
     state: started
     restart_policy: always
+    # Only the diagnostics port is published; the worker is otherwise a pure
+    # client (it dials scheduler and storage, nothing dials it) apart from
+    # Prometheus scraping this endpoint over the cluster network.
+    ports:
+      - "{{ worker_diag_port }}:{{ worker_diag_port }}"
     volumes:
       - /etc/buildbarn/worker:/config:ro
       - "{{ worker_root_dir }}:/worker"

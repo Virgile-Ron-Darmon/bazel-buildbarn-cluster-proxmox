@@ -1,0 +1,4 @@
+# Fallback netmask for the master's ens18 secondary static IP, used only if
+# Terraform does not pass master_mgmt_netmask. /16 matches the mgmt network
+# (DHCP-assigned mgmt addresses span 10.0.x.x). Override in tfvars if needed.
+master_mgmt_netmask: "255.255.0.0"

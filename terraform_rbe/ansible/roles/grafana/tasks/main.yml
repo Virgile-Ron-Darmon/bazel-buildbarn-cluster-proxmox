@@ -1,0 +1,71 @@
+# Grafana, master only. The image is pre-warmed onto the golden image
+# (group_vars/all.yml, monitoring_images) and runs with pull: never.
+#
+# Grafana is provisioned with a Prometheus datasource and the RBE overview
+# dashboard. The datasource points at Prometheus by cluster IP (master_ip),
+# so Grafana keeps working if either component is moved to its own host.
+
+- name: Ensure Grafana provisioning directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /etc/grafana/provisioning/datasources
+    - /etc/grafana/provisioning/dashboards
+    - /etc/grafana/provisioning/dashboards/json
+
+- name: Ensure Grafana data directory exists
+  file:
+    path: "{{ grafana_data_dir }}"
+    # The grafana image runs as uid 472.
+    owner: '472'
+    group: '472'
+    mode: '0755'
+    state: directory
+
+- name: Provision Prometheus as a Grafana datasource
+  template:
+    src: grafana_datasource.yml.j2
+    dest: /etc/grafana/provisioning/datasources/prometheus.yml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart grafana
+
+- name: Provision the dashboard provider
+  template:
+    src: grafana_dashboards_provider.yml.j2
+    dest: /etc/grafana/provisioning/dashboards/rbe.yml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart grafana
+
+- name: Install the RBE overview dashboard
+  copy:
+    src: rbe_overview.json
+    dest: /etc/grafana/provisioning/dashboards/json/rbe_overview.json
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart grafana
+
+- name: Ensure Grafana container is running
+  community.docker.docker_container:
+    name: grafana
+    image: "{{ monitoring_images.grafana }}"
+    pull: never
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ grafana_port }}:{{ grafana_port }}"
+    env:
+      GF_SECURITY_ADMIN_USER: "{{ grafana_admin_user }}"
+      GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_admin_password }}"
+      GF_SERVER_HTTP_PORT: "{{ grafana_port | string }}"
+    volumes:
+      - /etc/grafana/provisioning:/etc/grafana/provisioning:ro
+      - "{{ grafana_data_dir }}:/var/lib/grafana"

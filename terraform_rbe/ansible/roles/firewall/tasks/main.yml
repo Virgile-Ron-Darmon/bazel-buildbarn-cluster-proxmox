@@ -1,5 +1,5 @@
 # Permissive firewall for the RBE cluster: nodes talk to each other over
-# the 10.50.0.0/24 static-IP subnet (see inventory.tpl), so rather than
+# the 10.50.0.0/23 static-IP subnet (see inventory.tpl), so rather than
 # enumerate every Buildbarn port individually (grpc, storage, browser,
 # runner, plus whatever a given build action's platform-image tooling
 # needs) this just opens all traffic between cluster members on that
@@ -21,7 +21,11 @@
 - name: Allow all traffic between RBE cluster nodes on the internal subnet
   community.general.ufw:
     rule: allow
-    src: 10.50.0.0/24
+    # /23 (255.255.254.0), matching ens19_static_ip and the DHCP server. The
+    # addressing scheme in deploy.tf carries into the third octet past 254
+    # hosts (10.50.1.x), which a /24 here would silently exclude from
+    # node-to-node traffic once the fleet grew that large.
+    src: 10.50.0.0/23
 
 - name: Enable ufw
   community.general.ufw:

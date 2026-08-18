@@ -25,6 +25,7 @@
     ports:
       - "{{ scheduler_grpc_port }}:{{ scheduler_grpc_port }}"
       - "{{ scheduler_client_grpc_port }}:{{ scheduler_client_grpc_port }}"
+      - "{{ scheduler_diag_port }}:{{ scheduler_diag_port }}"
     volumes:
       - /etc/buildbarn/scheduler:/config:ro
     etc_hosts:

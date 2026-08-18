@@ -155,3 +155,42 @@ variable "bb_runner_base_image" {
   type        = string
   description = "Runner image name"
 }
+
+# Monitoring stack image tags. Pinned explicitly like the Buildbarn tags
+# (none is pulled by a floating tag here) and passed through to Ansible as
+# --extra-vars by source.tf (pre-warm) and configure.tf (deploy), so the
+# golden image and the running containers reference identical images.
+
+variable "prometheus_tag" {
+  type        = string
+  description = "Tag for prom/prometheus (monitoring stack, runs on the master)"
+}
+
+variable "grafana_tag" {
+  type        = string
+  description = "Tag for grafana/grafana (monitoring stack, runs on the master)"
+}
+
+variable "node_exporter_tag" {
+  type        = string
+  description = "Tag for prom/node-exporter (monitoring stack, runs on every host)"
+}
+
+# Stable static IP for the master's mgmt interface (ens18), added as a
+# secondary address alongside its DHCP lease. The Grafana/Prometheus URLs
+# point here (outputs.tf) so they don't depend on the DHCP-assigned address.
+
+variable "master_mgmt_static_ip" {
+  type        = string
+  description = "Static secondary IP for the master's ens18 (mgmt) interface; the stable host for the Grafana/Prometheus URLs."
+}
+
+variable "master_mgmt_netmask" {
+  type        = string
+  default     = "255.255.0.0"
+  description = <<-EOT
+    Netmask for master_mgmt_static_ip on ens18. Must match the mgmt network:
+    the DHCP-assigned mgmt addresses span 10.0.x.x (e.g. 10.0.0.56, 10.0.250.1),
+    i.e. a /16, so 255.255.0.0 by default. Override if your mgmt network differs.
+  EOT
+}

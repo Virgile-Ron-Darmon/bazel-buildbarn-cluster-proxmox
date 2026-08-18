@@ -18,6 +18,21 @@ bb_images:
   worker: "ghcr.io/buildbarn/bb-worker:{{ bb_worker_tag }}"
   runner_installer: "ghcr.io/buildbarn/bb-runner-installer:{{ bb_runner_tag }}"
 
+# Monitoring stack images. All three are tagged from Terraform (variables
+# prometheus_tag / grafana_tag / node_exporter_tag, passed as --extra-vars by
+# both source.tf and configure.tf), exactly like the Buildbarn images, so the
+# pre-warmed and running versions cannot drift. node_exporter runs on every
+# host; prometheus and grafana on the master only. All are pre-warmed onto the
+# golden image and run pull: never.
+monitoring_images:
+  prometheus: "prom/prometheus:{{ prometheus_tag }}"
+  grafana: "grafana/grafana:{{ grafana_tag }}"
+  node_exporter: "prom/node-exporter:{{ node_exporter_tag }}"
+
+# Diagnostics port for node_exporter, identical on every host (master and
+# workers). Disambiguated by cluster IP when scraped, like the worker port.
+node_exporter_port: 9100
+
 # The runner executes build actions inside a vanilla base image with the
 # bb_runner binary mounted in from bb-runner-installer. Pre-warmed too, so
 # clones do not pull it on first action.

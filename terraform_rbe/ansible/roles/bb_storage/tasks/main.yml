@@ -35,6 +35,7 @@
     restart_policy: always
     ports:
       - "{{ storage_grpc_port }}:{{ storage_grpc_port }}"
+      - "{{ storage_diag_port }}:{{ storage_diag_port }}"
     volumes:
       - /etc/buildbarn/storage:/config:ro
       - "{{ storage_data_dir }}:/data"

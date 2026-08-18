@@ -1,5 +1,17 @@
 {
   maximumMessageSizeBytes: 16 * 1024 * 1024,
+  // Diagnostics HTTP server exposes Prometheus metrics. Every worker uses the
+  // same port; the master's Prometheus disambiguates them by cluster IP
+  // (10.50.x.x), which is exactly the "as if remote" scrape model.
+  global: {
+    diagnosticsHttpServer: {
+      httpServers: [{
+        listenAddresses: [':{{ worker_diag_port }}'],
+        authenticationPolicy: { allow: {} },
+      }],
+      enablePrometheus: true,
+    },
+  },
   buildDirectories: [{
     native: {
       buildDirectoryPath: '/worker/build',

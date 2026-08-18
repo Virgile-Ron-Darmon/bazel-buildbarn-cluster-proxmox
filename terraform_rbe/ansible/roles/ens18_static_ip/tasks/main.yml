@@ -1,0 +1,30 @@
+# Adds a stable static IP to the master's ens18 (mgmt interface) as a
+# secondary address (the ens18:0 alias), leaving the interface's existing
+# DHCP lease intact -- so the provisioning path over the mgmt network is
+# unaffected and this only ever adds an address, never removes the one
+# Ansible reached the host on.
+#
+# This gives the Grafana/Prometheus dashboards a fixed, known URL host
+# (see outputs.tf: grafana_url / prometheus_url) instead of depending on
+# whatever the mgmt DHCP happens to hand out. Applied to the master only,
+# from bootstrap_master.yml.
+#
+# master_mgmt_static_ip is passed in from Terraform (var of the same name);
+# master_mgmt_netmask falls back to the role default if not supplied.
+
+- name: Drop secondary static config for ens18
+  template:
+    src: interfaces_ens18.j2
+    # Separate file from any baked-in ens18 DHCP stanza in
+    # /etc/network/interfaces, so this never clobbers the primary lease.
+    dest: /etc/network/interfaces.d/ens18_static
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Bring ens18:0 down first (in case it's already up from a prior run)
+  command: ifdown ens18:0
+  failed_when: false
+
+- name: Bring ens18:0 up with the static secondary address
+  command: ifup ens18:0

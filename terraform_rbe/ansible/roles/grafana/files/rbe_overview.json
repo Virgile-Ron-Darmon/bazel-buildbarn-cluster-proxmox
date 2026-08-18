@@ -1,0 +1,153 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "tags": ["rbe", "buildbarn"],
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "30s",
+  "title": "RBE Cluster Overview",
+  "uid": "rbe-overview",
+  "templating": {
+    "list": [
+      {
+        "name": "instance",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(up, instance)",
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Cluster health",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Targets up",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 1 },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "thresholds": { "steps": [ { "color": "green", "value": null } ] } } },
+      "targets": [ { "expr": "sum(up)", "refId": "A" } ]
+    },
+    {
+      "type": "stat",
+      "title": "Targets down",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 1 },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "thresholds": { "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } } },
+      "targets": [ { "expr": "count(up == 0) or vector(0)", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Target up/down by job",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 16, "x": 8, "y": 1 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "lineInterpolation": "stepAfter", "fillOpacity": 15 }, "min": 0, "max": 1 } },
+      "targets": [ { "expr": "up", "legendFormat": "{{job}} / {{instance}}", "refId": "A" } ]
+    },
+    {
+      "type": "row",
+      "title": "Buildbarn components (master)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Component memory (RSS)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 7 },
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [ { "expr": "process_resident_memory_bytes{job=~\"bb-storage|bb-scheduler|bb-browser\"}", "legendFormat": "{{job}}", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Component CPU (cores)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 7 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [ { "expr": "rate(process_cpu_seconds_total{job=~\"bb-storage|bb-scheduler|bb-browser\"}[5m])", "legendFormat": "{{job}}", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Component goroutines",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 7 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [ { "expr": "go_goroutines{job=~\"bb-storage|bb-scheduler|bb-browser\"}", "legendFormat": "{{job}}", "refId": "A" } ]
+    },
+    {
+      "type": "row",
+      "title": "Workers",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Worker liveness",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 15 },
+      "fieldConfig": { "defaults": { "min": 0, "max": 1, "custom": { "drawStyle": "line", "lineInterpolation": "stepAfter", "fillOpacity": 15 } } },
+      "targets": [ { "expr": "up{job=\"bb-worker\"}", "legendFormat": "{{instance}}", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Worker memory (RSS)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 15 },
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [ { "expr": "process_resident_memory_bytes{job=\"bb-worker\"}", "legendFormat": "{{instance}}", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Worker CPU (cores)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 15 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [ { "expr": "rate(process_cpu_seconds_total{job=\"bb-worker\"}[5m])", "legendFormat": "{{instance}}", "refId": "A" } ]
+    },
+    {
+      "type": "row",
+      "title": "Nodes (node_exporter)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 }
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU utilisation %",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 23 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [ { "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[5m])))", "legendFormat": "{{instance}}", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory used %",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 23 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [ { "expr": "100 * (1 - node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"})", "legendFormat": "{{instance}}", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Root filesystem used %",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 30 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [ { "expr": "100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\", instance=~\"$instance\"} / node_filesystem_size_bytes{mountpoint=\"/\", instance=~\"$instance\"})", "legendFormat": "{{instance}}", "refId": "A" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Load average (1m)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 30 },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [ { "expr": "node_load1{instance=~\"$instance\"}", "legendFormat": "{{instance}}", "refId": "A" } ]
+    }
+  ]
+}

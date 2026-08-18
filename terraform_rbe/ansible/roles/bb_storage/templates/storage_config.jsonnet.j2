@@ -1,5 +1,18 @@
 {
   maximumMessageSizeBytes: 16 * 1024 * 1024,
+  // Diagnostics HTTP server exposes Prometheus metrics. Bound on all
+  // interfaces (':port', not 127.0.0.1) so the master's Prometheus scrapes
+  // it over the cluster network via 10.50.0.1, the same way it reaches every
+  // other component -- nothing is scraped over localhost.
+  global: {
+    diagnosticsHttpServer: {
+      httpServers: [{
+        listenAddresses: [':{{ storage_diag_port }}'],
+        authenticationPolicy: { allow: {} },
+      }],
+      enablePrometheus: true,
+    },
+  },
   contentAddressableStorage: {
     backend: {
       'local': {
