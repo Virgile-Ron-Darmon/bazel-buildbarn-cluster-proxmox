@@ -8,6 +8,14 @@
 # Image references come from group_vars/all.yml, the same place the
 # deployment roles read them from, so the pulled tags and the run tags
 # cannot drift apart.
+#
+# The runner base image is the exception: rather than being pulled and run
+# as-is, it is rebuilt here from runner_base.Dockerfile to layer in the
+# system build toolchain (flex, bison, gcc, etc.) that build actions such as
+# Verilator's ./configure expect to find on the PATH. The rebuilt image is
+# re-tagged in place under the same bb_runner_base_image reference, so every
+# downstream role keeps launching that tag with pull: never and transparently
+# picks up the toolchain-equipped image from the golden image's cache.
 
 - hosts: rbe_source
   become: true
@@ -20,6 +28,7 @@
 
     - name: Gather facts
       setup:
+
     - name: Fail early if any image tag is still a placeholder
       assert:
         that:
@@ -29,7 +38,6 @@
           - bb_worker_tag is defined
           - bb_runner_tag is defined
           - bb_runner_base_image is defined
-          - bb_runner_base_image_custom is defined
           - prometheus_tag is defined
           - grafana_tag is defined
           - node_exporter_tag is defined
@@ -57,14 +65,17 @@
         - "{{ monitoring_images.grafana }}"
         - "{{ monitoring_images.node_exporter }}"
 
+    # bb_runner_base_image is deliberately absent from the pull loop above:
+    # the build step below pulls the upstream base itself (pull: true) as the
+    # Dockerfile's FROM, then overwrites the same tag with the rebuilt image.
     - name: Copy runner base Dockerfile to source VM
       copy:
         src: files/runner_base.Dockerfile
         dest: /tmp/runner_base.Dockerfile
 
-    - name: Build custom runner base image with build toolchain
+    - name: Build runner base image with build toolchain (re-tagged in place)
       community.docker.docker_image:
-        name: "{{ bb_runner_base_image_custom }}"
+        name: "{{ bb_runner_base_image }}"
         build:
           path: /tmp
           dockerfile: runner_base.Dockerfile
@@ -72,3 +83,13 @@
             BASE_IMAGE: "{{ bb_runner_base_image }}"
           pull: true
         source: build
+        force_source: true
+
+    - name: List cached images for confirmation
+      command: docker images --format '{{ "{{" }}.Repository{{ "}}" }}:{{ "{{" }}.Tag{{ "}}" }}'
+      register: cached_images
+      changed_when: false
+
+    - name: Show what is now baked into the golden image
+      debug:
+        var: cached_images.stdout_lines

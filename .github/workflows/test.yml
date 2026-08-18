@@ -1,0 +1,39 @@
+name: Build with Bazel
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      #- name: Install Verilator
+      #  run: |
+      #    sudo apt-get update
+      #    sudo apt-get install -y verilator
+      
+      - name: Install Verilator Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends bison flex autoconf automake perl
+          sudo apt install libfl-dev
+          sudo apt install help2man
+
+      - name: Install Bazelisk
+        run: |
+          curl -Lo bazelisk https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64
+          chmod +x bazelisk
+          sudo mv bazelisk /usr/local/bin/bazel
+
+      #- name: Check Verilator version
+      #  run: verilator --version
+        
+      - name: Check Bazel versions
+        run: bazel version
+
+      - name: Bazel Build
+        run: bazel build --config=rbe //... --verbose_failures
+
+      - name: Bazel Test
+        run: bazel test --config=rbe //... --test_output=errors
