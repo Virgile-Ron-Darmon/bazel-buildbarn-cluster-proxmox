@@ -20,7 +20,6 @@
 
     - name: Gather facts
       setup:
-
     - name: Fail early if any image tag is still a placeholder
       assert:
         that:
@@ -30,6 +29,7 @@
           - bb_worker_tag is defined
           - bb_runner_tag is defined
           - bb_runner_base_image is defined
+          - bb_runner_base_image_custom is defined
           - prometheus_tag is defined
           - grafana_tag is defined
           - node_exporter_tag is defined
@@ -53,16 +53,22 @@
         - "{{ bb_images.browser }}"
         - "{{ bb_images.worker }}"
         - "{{ bb_images.runner_installer }}"
-        - "{{ bb_runner_base_image }}"
         - "{{ monitoring_images.prometheus }}"
         - "{{ monitoring_images.grafana }}"
         - "{{ monitoring_images.node_exporter }}"
 
-    - name: List cached images for confirmation
-      command: docker images --format '{{ "{{" }}.Repository{{ "}}" }}:{{ "{{" }}.Tag{{ "}}" }}'
-      register: cached_images
-      changed_when: false
+    - name: Copy runner base Dockerfile to source VM
+      copy:
+        src: files/runner_base.Dockerfile
+        dest: /tmp/runner_base.Dockerfile
 
-    - name: Show what is now baked into the golden image
-      debug:
-        var: cached_images.stdout_lines
+    - name: Build custom runner base image with build toolchain
+      community.docker.docker_image:
+        name: "{{ bb_runner_base_image_custom }}"
+        build:
+          path: /tmp
+          dockerfile: runner_base.Dockerfile
+          args:
+            BASE_IMAGE: "{{ bb_runner_base_image }}"
+          pull: true
+        source: build
