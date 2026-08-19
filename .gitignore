@@ -24,6 +24,9 @@ secrets.tfvars
 .terraformrc
 terraform.rc
 
+# Ansible
+*.ini
+
 # Rust
 target/
 Cargo.lock
