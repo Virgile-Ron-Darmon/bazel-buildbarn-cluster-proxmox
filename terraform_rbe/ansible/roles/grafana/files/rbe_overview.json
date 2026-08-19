@@ -19,6 +19,29 @@
         "multi": true,
         "refresh": 2,
         "current": { "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "master_instance",
+        "label": "Master host",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(up{job=\"bb-storage\"}, instance)",
+        "regex": "/^([^:]+):/",
+        "includeAll": false,
+        "multi": false,
+        "refresh": 2
+      },
+      {
+        "name": "worker",
+        "label": "Worker host",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(up{job=\"bb-worker\"}, instance)",
+        "regex": "/^([^:]+):/",
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2,
+        "current": { "text": "All", "value": "$__all" }
       }
     ]
   },
@@ -54,100 +77,172 @@
       "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "lineInterpolation": "stepAfter", "fillOpacity": 15 }, "min": 0, "max": 1 } },
       "targets": [ { "expr": "up", "legendFormat": "{{job}} / {{instance}}", "refId": "A" } ]
     },
+
     {
       "type": "row",
-      "title": "Buildbarn components (master)",
+      "title": "Master",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 }
     },
     {
       "type": "timeseries",
-      "title": "Component memory (RSS)",
+      "title": "Master liveness",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 7, "w": 8, "x": 0, "y": 7 },
-      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
-      "targets": [ { "expr": "process_resident_memory_bytes{job=~\"bb-storage|bb-scheduler|bb-browser\"}", "legendFormat": "{{job}}", "refId": "A" } ]
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1,
+          "custom": { "drawStyle": "line", "lineInterpolation": "stepAfter", "fillOpacity": 15 }
+        }
+      },
+      "targets": [
+        { "expr": "up{job=~\"bb-storage|bb-scheduler|bb-browser|prometheus\", instance=~\"^$master_instance:.*\"}", "legendFormat": "{{job}}", "refId": "A" }
+      ]
     },
     {
       "type": "timeseries",
-      "title": "Component CPU (cores)",
+      "title": "Master CPU",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 7, "w": 8, "x": 8, "y": 7 },
-      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
-      "targets": [ { "expr": "rate(process_cpu_seconds_total{job=~\"bb-storage|bb-scheduler|bb-browser\"}[5m])", "legendFormat": "{{job}}", "refId": "A" } ]
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "rate(process_cpu_seconds_total{job=~\"bb-storage|bb-scheduler|bb-browser|prometheus\", instance=~\"^$master_instance:.*\"}[5m]) * 100", "legendFormat": "{{job}}", "refId": "B" },
+        { "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"^$master_instance:.*\"}[5m])))", "legendFormat": "node total", "refId": "A" }
+      ]
     },
     {
       "type": "timeseries",
-      "title": "Component goroutines",
+      "title": "Master RAM",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "h": 7, "w": 8, "x": 16, "y": 7 },
-      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
-      "targets": [ { "expr": "go_goroutines{job=~\"bb-storage|bb-scheduler|bb-browser\"}", "legendFormat": "{{job}}", "refId": "A" } ]
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "process_resident_memory_bytes{job=~\"bb-storage|bb-scheduler|bb-browser|prometheus\", instance=~\"^$master_instance:.*\"}", "legendFormat": "{{job}}", "refId": "C" },
+        { "expr": "node_memory_MemTotal_bytes{instance=~\"^$master_instance:.*\"} - node_memory_MemAvailable_bytes{instance=~\"^$master_instance:.*\"}", "legendFormat": "node used", "refId": "B" },
+        { "expr": "node_memory_MemTotal_bytes{instance=~\"^$master_instance:.*\"}", "legendFormat": "node available", "refId": "A" }
+      ]
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Tasks scheduled/sec",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 14 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "sum(rate(buildbarn_builder_in_memory_build_queue_tasks_scheduled_total{instance=~\"^$master_instance:.*\"}[5m]))", "legendFormat": "tasks scheduled/sec", "refId": "A" }
+      ]
     },
     {
+      "type": "timeseries",
+      "title": "Failed lookups/writes",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 14 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "sum(rate(buildbarn_blobstore_hashing_key_location_map_get_too_many_attempts_total{instance=~\"^$master_instance:.*\"}[5m]))", "legendFormat": "failed lookups/sec", "refId": "A" },
+        { "expr": "sum(rate(buildbarn_blobstore_hashing_key_location_map_put_too_many_iterations_total{instance=~\"^$master_instance:.*\"}[5m]))", "legendFormat": "failed writes/sec", "refId": "B" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Eviction rate",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 14 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "sum(rate(buildbarn_eviction_set_operations_total{instance=~\"^$master_instance:.*\"}[5m]))", "legendFormat": "evictions/sec", "refId": "A" }
+      ]
+    },
+
+    {
       "type": "row",
-      "title": "Workers",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 }
+      "title": "Worker: $worker",
+      "repeat": "worker",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 }
     },
     {
       "type": "timeseries",
       "title": "Worker liveness",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 15 },
-      "fieldConfig": { "defaults": { "min": 0, "max": 1, "custom": { "drawStyle": "line", "lineInterpolation": "stepAfter", "fillOpacity": 15 } } },
-      "targets": [ { "expr": "up{job=\"bb-worker\"}", "legendFormat": "{{instance}}", "refId": "A" } ]
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 22 },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1,
+          "custom": { "drawStyle": "line", "lineInterpolation": "stepAfter", "fillOpacity": 15 }
+        }
+      },
+      "targets": [
+        { "expr": "up{job=\"bb-worker\", instance=~\"^$worker:.*\"}", "legendFormat": "{{instance}}", "refId": "A" }
+      ]
     },
     {
       "type": "timeseries",
-      "title": "Worker memory (RSS)",
+      "title": "Worker CPU",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 15 },
-      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
-      "targets": [ { "expr": "process_resident_memory_bytes{job=\"bb-worker\"}", "legendFormat": "{{instance}}", "refId": "A" } ]
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 22 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "rate(process_cpu_seconds_total{job=\"bb-worker\", instance=~\"^$worker:.*\"}[5m]) * 100", "legendFormat": "bb-worker", "refId": "B" },
+        { "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"^$worker:.*\"}[5m])))", "legendFormat": "node total", "refId": "A" }
+      ]
     },
     {
       "type": "timeseries",
-      "title": "Worker CPU (cores)",
+      "title": "Worker RAM",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 15 },
-      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
-      "targets": [ { "expr": "rate(process_cpu_seconds_total{job=\"bb-worker\"}[5m])", "legendFormat": "{{instance}}", "refId": "A" } ]
-    },
-    {
-      "type": "row",
-      "title": "Nodes (node_exporter)",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 }
-    },
-    {
-      "type": "timeseries",
-      "title": "CPU utilisation %",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 23 },
-      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
-      "targets": [ { "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[5m])))", "legendFormat": "{{instance}}", "refId": "A" } ]
-    },
-    {
-      "type": "timeseries",
-      "title": "Memory used %",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 23 },
-      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
-      "targets": [ { "expr": "100 * (1 - node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"})", "legendFormat": "{{instance}}", "refId": "A" } ]
-    },
-    {
-      "type": "timeseries",
-      "title": "Root filesystem used %",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 30 },
-      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
-      "targets": [ { "expr": "100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\", instance=~\"$instance\"} / node_filesystem_size_bytes{mountpoint=\"/\", instance=~\"$instance\"})", "legendFormat": "{{instance}}", "refId": "A" } ]
-    },
-    {
-      "type": "timeseries",
-      "title": "Load average (1m)",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 30 },
-      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
-      "targets": [ { "expr": "node_load1{instance=~\"$instance\"}", "legendFormat": "{{instance}}", "refId": "A" } ]
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 22 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        { "expr": "process_resident_memory_bytes{job=\"bb-worker\", instance=~\"^$worker:.*\"}", "legendFormat": "bb-worker", "refId": "C" },
+        { "expr": "node_memory_MemTotal_bytes{instance=~\"^$worker:.*\"} - node_memory_MemAvailable_bytes{instance=~\"^$worker:.*\"}", "legendFormat": "node used", "refId": "B" },
+        { "expr": "node_memory_MemTotal_bytes{instance=~\"^$worker:.*\"}", "legendFormat": "node available", "refId": "A" }
+      ]
     }
   ]
 }
