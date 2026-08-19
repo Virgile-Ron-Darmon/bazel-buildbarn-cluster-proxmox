@@ -1,6 +1,6 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
 
-N = 1000  # how many binaries to generate
+N = 10  # how many binaries to generate
 
 [
     rust_binary(
