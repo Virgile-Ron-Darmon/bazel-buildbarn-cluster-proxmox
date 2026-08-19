@@ -65,9 +65,17 @@
         - "{{ monitoring_images.grafana }}"
         - "{{ monitoring_images.node_exporter }}"
 
+
+
+
     # bb_runner_base_image is deliberately absent from the pull loop above:
     # the build step below pulls the upstream base itself (pull: true) as the
     # Dockerfile's FROM, then overwrites the same tag with the rebuilt image.
+
+    - name: Define the toolchain the runner image must provide
+      set_fact:
+        runner_required_bins: [gcc, g++, flex, bison, autoconf, automake, perl]
+
     - name: Copy runner base Dockerfile to source VM
       copy:
         src: files/runner_base.Dockerfile
@@ -82,8 +90,43 @@
           args:
             BASE_IMAGE: "{{ bb_runner_base_image }}"
           pull: true
+          nocache: true
         source: build
         force_source: true
+
+    # Resolve every required tool via PATH INSIDE the image, exactly as an
+    # action would. Nonzero exit -> command module fails the task -> the
+    # null_resource fails -> terraform halts before deploy.tf clones anything.
+    - name: Verify the runner toolchain is present in the built image
+      command:
+        argv:
+          - docker
+          - run
+          - --rm
+          - "{{ bb_runner_base_image }}"
+          - sh
+          - -euc
+          - |
+            missing=""
+            for b in {{ runner_required_bins | join(' ') }}; do
+              command -v "$b" >/dev/null 2>&1 || missing="$missing $b"
+            done
+            # libfl-dev ships no binary; the linker needs it at action time,
+            # so check the package is actually installed, not just flex.
+            dpkg -s libfl-dev >/dev/null 2>&1 || missing="$missing libfl-dev"
+            if [ -n "$missing" ]; then
+              echo "runner image {{ bb_runner_base_image }} is MISSING:$missing" >&2
+              exit 1
+            fi
+            echo "runner toolchain OK: {{ runner_required_bins | join(', ') }}, libfl-dev"
+      register: runner_toolchain_check
+      changed_when: false
+
+    - name: Show runner toolchain verification result
+      debug:
+        msg: "{{ runner_toolchain_check.stdout }}"
+
+
 
     - name: List cached images for confirmation
       command: docker images --format '{{ "{{" }}.Repository{{ "}}" }}:{{ "{{" }}.Tag{{ "}}" }}'
